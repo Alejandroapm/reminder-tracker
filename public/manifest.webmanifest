@@ -1,0 +1,18 @@
+{
+  "name": "Reminder Tracker",
+  "short_name": "Reminders",
+  "description": "Create recurring reminders with snooze and completion actions.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#101828",
+  "theme_color": "#101828",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
