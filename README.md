@@ -29,3 +29,7 @@ npm run build
 After the GitHub Pages deployment is live, open the site in Safari, tap Share, then choose **Add to Home Screen**.
 
 Note: iOS PWAs can show notifications after install and permission approval, but scheduled background notifications are more limited than a native App Store app. This app keeps the in-app reminder pop-up active while the app is open and uses browser notifications when supported.
+
+## GitHub Pages Setup
+
+If the first deployment fails with a message about Pages not being enabled, open the repository's **Settings > Pages**, choose **GitHub Actions** as the source, save, then rerun the **Deploy PWA** workflow.
