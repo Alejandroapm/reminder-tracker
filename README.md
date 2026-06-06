@@ -31,24 +31,45 @@ npm run build
 
 This repository now includes a Capacitor iOS project in `ios/`. That is the real iPhone app path. The GitHub Pages version is still only a web preview and cannot guarantee a scheduled iPhone alarm while the website is closed.
 
-To build the native app from Git, use a Mac with Xcode:
+### Requirements
+
+- A Mac with **Xcode 15 or newer** (Capacitor 8 uses Swift 5.9).
+- **macOS Ventura 13.5+** or newer is recommended for Xcode 15.
+- Big Sur can only install up to Xcode 13, which is too old for this Capacitor 8 project. Use Monterey, Ventura, Sonoma, or a newer macOS VM if possible.
+- Node.js 20+ and npm.
+- An Apple ID (free) for on-device testing, or a paid Apple Developer account for wider distribution.
+
+### Quick Mac bootstrap
+
+After cloning the repo on your Mac:
+
+```bash
+chmod +x scripts/mac-ios-bootstrap.sh
+./scripts/mac-ios-bootstrap.sh
+npm run ios:open
+```
+
+Or run the steps manually:
 
 ```bash
 npm install
-npm run build
 npm run ios:sync
 npm run ios:open
 ```
 
-Then in Xcode:
+`npm run ios:sync` builds the web app, copies it into the native iOS project, and wires up Capacitor Local Notifications.
 
-1. Select the `App` target.
-2. Set your Apple Developer Team under **Signing & Capabilities**.
-3. Confirm the bundle identifier is available, or change it from `com.alejandroapm.remindertracker`.
-4. Enable the **Time Sensitive Notifications** capability for stronger reminder delivery.
-5. Build and run on your iPhone, or archive/export an `.ipa` using your signing profile.
+### Xcode steps
 
-After installing a development or enterprise-signed build, iOS may ask you to trust the developer profile in **Settings > General > VPN & Device Management**.
+1. Open `ios/App/App.xcworkspace` or let `npm run ios:open` launch Xcode.
+2. Select the **App** target.
+3. Under **Signing & Capabilities**, choose your Apple Developer Team.
+4. Confirm the bundle identifier is available, or change it from `com.alejandroapm.remindertracker`.
+5. Verify **Time Sensitive Notifications** is enabled (already configured in `App.entitlements`).
+6. Connect your iPhone with USB, select it as the run destination, then press **Run** (▶).
+7. On first install, trust the developer on the phone in **Settings > General > VPN & Device Management**.
+
+To ship a build outside your own device, use **Product > Archive**, then distribute with your signing profile.
 
 You cannot install an unsigned iPhone app directly from GitHub. iOS requires signing before the phone will run it.
 

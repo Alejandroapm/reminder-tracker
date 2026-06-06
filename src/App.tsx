@@ -8,7 +8,6 @@ import {
   Clock3,
   Droplets,
   Edit3,
-  Heart,
   Home,
   Languages,
   ListChecks,
@@ -847,7 +846,11 @@ export function App() {
           </div>
           <div className="brandCharm" aria-hidden="true">
             <span className="miniBow" />
-            <Heart size={24} fill="currentColor" />
+            <img
+              className="brandMascot"
+              src={`${import.meta.env.BASE_URL}images/Stokes-Hello-Kitty2.webp`}
+              alt=""
+            />
           </div>
           <div className="topActions">
             <button
