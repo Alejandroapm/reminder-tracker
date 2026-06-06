@@ -1,7 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
-  <rect width="180" height="180" rx="40" fill="#101828"/>
-  <path fill="#D77A61" d="M127 35c18 11 32 30 33 53 2 41-28 75-67 77-42 3-77-28-80-69-2-31 15-59 41-73l9 27c-13 9-21 24-20 42 2 24 23 42 48 40 23-2 41-22 39-46-1-14-8-26-19-34l16-17Z"/>
-  <rect x="53" y="50" width="78" height="100" rx="18" fill="#F7FAFC"/>
-  <path fill="#101828" d="M70 79h46v12H70zM70 105h46v12H70z"/>
-  <path fill="#3FA77A" d="m76 133-15-15 10-10 5 5 19-21 11 9-30 32Z"/>
+  <rect width="180" height="180" rx="40" fill="#FFF3FA"/>
+  <path fill="#FF6AA8" stroke="#FFFFFF" stroke-width="7" d="M83 43c-13-19-43-16-49 7-5 22 18 36 40 20 4-3 8-7 12-11 0-6-1-12-3-16Z"/>
+  <path fill="#FF6AA8" stroke="#FFFFFF" stroke-width="7" d="M97 43c13-19 43-16 49 7 5 22-18 36-40 20-4-3-8-7-12-11 0-6 1-12 3-16Z"/>
+  <circle cx="90" cy="56" r="12" fill="#F55C9D" stroke="#FFFFFF" stroke-width="6"/>
+  <rect x="45" y="68" width="90" height="82" rx="22" fill="#FFFFFF" stroke="#FFD0E5" stroke-width="5"/>
+  <path fill="#CF2F79" d="M65 91h50v13H65zM65 116h33v13H65z"/>
+  <path fill="#2F8F78" d="m78 143-17-17 11-10 6 6 23-25 12 11-35 35Z"/>
 </svg>

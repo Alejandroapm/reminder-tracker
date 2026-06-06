@@ -8,6 +8,7 @@ import {
   Clock3,
   Droplets,
   Edit3,
+  Heart,
   Home,
   Languages,
   ListChecks,
@@ -843,6 +844,10 @@ export function App() {
             <h1>
               {labels.hello} {username || labels.usernamePlaceholder}
             </h1>
+          </div>
+          <div className="brandCharm" aria-hidden="true">
+            <span className="miniBow" />
+            <Heart size={24} fill="currentColor" />
           </div>
           <div className="topActions">
             <button

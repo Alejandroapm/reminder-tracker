@@ -4,8 +4,8 @@
   "description": "Create recurring reminders with snooze and completion actions.",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#101828",
-  "theme_color": "#101828",
+  "background_color": "#fff5fa",
+  "theme_color": "#f55c9d",
   "orientation": "portrait",
   "icons": [
     {

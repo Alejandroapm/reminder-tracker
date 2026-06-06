@@ -1,9 +1,9 @@
 :root {
-  color-scheme: dark;
+  color-scheme: light;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #f8fbff;
-  background: #0d1321;
+  color: #402238;
+  background: #fff5fa;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -18,8 +18,8 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(215, 122, 97, 0.26), transparent 34rem),
-    linear-gradient(140deg, #0d1321 0%, #16324f 46%, #1f3f4f 100%);
+    linear-gradient(135deg, rgba(255, 216, 235, 0.95), rgba(255, 249, 252, 0.98) 48%, rgba(219, 246, 239, 0.78)),
+    #fff5fa;
 }
 
 button,
@@ -34,23 +34,42 @@ button {
 }
 
 .appShell {
+  position: relative;
   min-height: 100vh;
   padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom));
   display: grid;
   place-items: center;
+  overflow-x: hidden;
+}
+
+.appShell::before {
+  content: "\2661   \2726   \2661   \2726   \2661";
+  position: fixed;
+  inset: 3% auto auto -3%;
+  width: 112%;
+  color: rgba(219, 63, 126, 0.08);
+  font-size: 5.4rem;
+  font-weight: 900;
+  line-height: 1.8;
+  letter-spacing: 22px;
+  transform: rotate(-13deg);
+  pointer-events: none;
+  white-space: pre-wrap;
 }
 
 .phoneSurface {
+  position: relative;
+  z-index: 1;
   width: min(100%, 430px);
   min-height: min(900px, calc(100vh - 36px));
   max-height: calc(100vh - 36px);
   overflow: auto;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 167, 207, 0.72);
   border-radius: 30px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)),
-    rgba(16, 24, 40, 0.9);
-  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 241, 248, 0.96)),
+    #fff8fc;
+  box-shadow: 0 28px 80px rgba(180, 50, 105, 0.22);
   padding: 22px;
   scrollbar-width: none;
 }
@@ -64,7 +83,8 @@ button {
 .toolbar,
 .cardTop,
 .dialogActions,
-.topActions {
+.topActions,
+.brandCharm {
   display: flex;
   align-items: center;
 }
@@ -76,11 +96,15 @@ button {
   gap: 14px;
 }
 
+.topBar {
+  position: relative;
+}
+
 .eyebrow {
   margin: 0 0 6px;
-  color: #9fd5c0;
+  color: #d83d83;
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 900;
   letter-spacing: 0;
   text-transform: uppercase;
 }
@@ -93,15 +117,64 @@ p {
 
 h1 {
   margin-bottom: 0;
-  max-width: 280px;
-  font-size: clamp(2.2rem, 10vw, 3.8rem);
-  line-height: 0.94;
+  max-width: 210px;
+  color: #4f183b;
+  font-size: clamp(2.05rem, 7.4vw, 2.9rem);
+  line-height: 0.98;
   letter-spacing: 0;
+  overflow-wrap: anywhere;
 }
 
 h2 {
   margin-bottom: 8px;
   letter-spacing: 0;
+}
+
+.brandCharm {
+  position: absolute;
+  right: 108px;
+  top: 4px;
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  justify-content: center;
+  color: #f55c9d;
+  background: #fff;
+  border: 1px solid #ffd0e5;
+  box-shadow: 0 12px 28px rgba(216, 61, 131, 0.18);
+}
+
+.miniBow {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ff8bbb;
+  transform: translateX(-50%);
+}
+
+.miniBow::before,
+.miniBow::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  width: 20px;
+  height: 18px;
+  border-radius: 14px 14px 12px 14px;
+  background: #ff6aa8;
+  border: 2px solid #fff;
+}
+
+.miniBow::before {
+  right: 9px;
+  transform: rotate(18deg);
+}
+
+.miniBow::after {
+  left: 9px;
+  transform: rotate(-18deg);
 }
 
 .iconButton,
@@ -118,18 +191,19 @@ h2 {
   width: 46px;
   height: 46px;
   border-radius: 16px;
-  color: #f8fbff;
-  background: rgba(255, 255, 255, 0.13);
+  color: #cf2f79;
+  background: #fff;
+  box-shadow: 0 10px 22px rgba(216, 61, 131, 0.13);
 }
 
 .iconButton.ghost {
-  background: rgba(16, 24, 40, 0.08);
-  color: #101828;
+  background: rgba(255, 237, 246, 0.92);
+  color: #cf2f79;
 }
 
 .iconButton.permissionGranted {
-  color: #101828;
-  background: #9fd5c0;
+  color: #1f5b4e;
+  background: #c9f3e7;
 }
 
 .topActions {
@@ -140,9 +214,10 @@ h2 {
 .settingsPanel {
   margin: 18px 0 0;
   padding: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid #ffd0e5;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 16px 38px rgba(216, 61, 131, 0.12);
 }
 
 .settingsPanelHeader,
@@ -161,6 +236,7 @@ h2 {
 .settingsPanelHeader span,
 .settingsField span {
   gap: 7px;
+  color: #4f183b;
   font-weight: 900;
 }
 
@@ -171,8 +247,8 @@ h2 {
   border-radius: 8px;
   display: grid;
   place-items: center;
-  color: #f8fbff;
-  background: rgba(255, 255, 255, 0.1);
+  color: #cf2f79;
+  background: #ffe3f0;
 }
 
 .settingsField {
@@ -185,11 +261,11 @@ h2 {
 .settingsField select {
   min-height: 44px;
   width: 100%;
-  border: 0;
+  border: 1px solid #ffd0e5;
   border-radius: 8px;
   padding: 0 12px;
-  color: #101828;
-  background: #f8fbff;
+  color: #402238;
+  background: #fff9fc;
   outline: 0;
 }
 
@@ -200,18 +276,19 @@ h2 {
   border-radius: 8px;
   justify-content: center;
   gap: 8px;
-  color: #101828;
-  background: #9fd5c0;
+  color: #fff;
+  background: #f55c9d;
   font-weight: 900;
 }
 
 .settingsNotify.granted {
-  background: #f6c177;
+  color: #1f5b4e;
+  background: #c9f3e7;
 }
 
 .settingsNote {
   margin: 10px 0 0;
-  color: #c9d5e3;
+  color: #7c6274;
   font-size: 0.86rem;
   line-height: 1.35;
 }
@@ -226,14 +303,16 @@ h2 {
 .statusBand div {
   min-height: 88px;
   padding: 14px;
+  border: 1px solid rgba(255, 188, 219, 0.72);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.78);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
 .statusBand strong {
+  color: #cf2f79;
   font-size: 2rem;
   line-height: 1;
 }
@@ -244,7 +323,7 @@ h2 {
 .emptyState p,
 .dueDialog p,
 .setupDialog p {
-  color: #c9d5e3;
+  color: #7c6274;
 }
 
 .toolbar {
@@ -259,9 +338,10 @@ h2 {
   display: flex;
   align-items: center;
   gap: 8px;
+  border: 1px solid #ffd0e5;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #c9d5e3;
+  background: rgba(255, 255, 255, 0.88);
+  color: #cf2f79;
 }
 
 .searchBox input,
@@ -275,12 +355,12 @@ h2 {
 
 .searchBox input {
   min-width: 0;
-  color: #f8fbff;
+  color: #402238;
   background: transparent;
 }
 
 .searchBox input::placeholder {
-  color: #9ba8ba;
+  color: #b693a7;
 }
 
 .addButton,
@@ -299,8 +379,9 @@ h2 {
   height: 48px;
   border-radius: 8px;
   padding: 0 16px;
-  color: #101828;
-  background: #9fd5c0;
+  color: #fff;
+  background: #f55c9d;
+  box-shadow: 0 12px 24px rgba(245, 92, 157, 0.25);
 }
 
 .filters {
@@ -312,18 +393,18 @@ h2 {
 
 .filters button {
   min-height: 38px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid #ffd0e5;
   border-radius: 8px;
-  color: #c9d5e3;
-  background: transparent;
+  color: #7c6274;
+  background: rgba(255, 255, 255, 0.72);
   text-transform: capitalize;
   font-weight: 800;
 }
 
 .filters button.active {
-  color: #101828;
-  background: #f6c177;
-  border-color: #f6c177;
+  color: #fff;
+  background: #cf2f79;
+  border-color: #cf2f79;
 }
 
 .reminderList {
@@ -339,13 +420,15 @@ h2 {
   gap: 12px;
   min-height: 124px;
   padding: 16px;
+  border: 1px solid #ffd5e7;
   border-radius: 8px;
-  background: rgba(248, 251, 255, 0.96);
-  color: #101828;
+  background: rgba(255, 255, 255, 0.96);
+  color: #402238;
+  box-shadow: 0 12px 28px rgba(216, 61, 131, 0.1);
 }
 
 .reminderCard.due {
-  outline: 3px solid #f6c177;
+  outline: 3px solid #ffb0d3;
 }
 
 .reminderCard.completed {
@@ -356,8 +439,8 @@ h2 {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  color: #3fa77a;
-  background: rgba(63, 167, 122, 0.12);
+  color: #2f8f78;
+  background: #e1f8f1;
 }
 
 .completeButton:disabled {
@@ -368,8 +451,8 @@ h2 {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  color: #8a3342;
-  background: rgba(138, 51, 66, 0.1);
+  color: #a42b61;
+  background: #ffe3f0;
 }
 
 .cardActions {
@@ -381,8 +464,8 @@ h2 {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  color: #244e73;
-  background: rgba(36, 78, 115, 0.1);
+  color: #8752a1;
+  background: #f3e8ff;
 }
 
 .reminderBody {
@@ -401,8 +484,8 @@ h2 {
   min-height: 26px;
   padding: 0 9px;
   border-radius: 999px;
-  color: #244e73;
-  background: #e5edf6;
+  color: #cf2f79;
+  background: #ffe6f2;
   font-size: 0.78rem;
   font-weight: 900;
 }
@@ -415,33 +498,32 @@ h2 {
 }
 
 .priorityLow {
-  background: #9fd5c0;
+  background: #8edfc9;
 }
 
 .priorityNormal {
-  background: #f6c177;
+  background: #ff9bc7;
 }
 
 .priorityHigh {
-  background: #d77a61;
+  background: #b45ad3;
 }
 
 .reminderCard h2 {
   margin: 10px 0 6px;
+  color: #4f183b;
   font-size: 1.12rem;
   overflow-wrap: anywhere;
 }
 
 .reminderCard p {
   margin-bottom: 12px;
-  color: #526171;
   overflow-wrap: anywhere;
 }
 
 .metaGrid {
   display: grid;
   gap: 6px;
-  color: #526171;
   font-size: 0.83rem;
   font-weight: 700;
 }
@@ -454,17 +536,20 @@ h2 {
 
 .emptyState {
   min-height: 270px;
-  border: 1px dashed rgba(255, 255, 255, 0.24);
+  border: 1px dashed rgba(216, 61, 131, 0.35);
   border-radius: 8px;
   display: grid;
   place-items: center;
   align-content: center;
   gap: 8px;
   text-align: center;
+  color: #cf2f79;
+  background: rgba(255, 255, 255, 0.48);
 }
 
 .emptyState h2 {
   margin-bottom: 0;
+  color: #4f183b;
 }
 
 .sheetBackdrop,
@@ -474,7 +559,7 @@ h2 {
   z-index: 10;
   display: grid;
   padding: 18px;
-  background: rgba(5, 11, 22, 0.62);
+  background: rgba(90, 28, 65, 0.24);
   backdrop-filter: blur(18px);
 }
 
@@ -487,10 +572,11 @@ h2 {
 .setupDialog {
   width: min(100%, 430px);
   margin: 0 auto;
+  border: 1px solid #ffd0e5;
   border-radius: 24px;
-  background: #f8fbff;
-  color: #101828;
-  box-shadow: 0 26px 90px rgba(0, 0, 0, 0.42);
+  background: #fffafe;
+  color: #402238;
+  box-shadow: 0 26px 70px rgba(180, 50, 105, 0.24);
 }
 
 .composerSheet {
@@ -520,7 +606,7 @@ h2 {
 }
 
 .field span {
-  color: #53616f;
+  color: #7c6274;
   font-size: 0.78rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -530,10 +616,11 @@ h2 {
 .field select,
 .field textarea {
   min-height: 48px;
+  border: 1px solid #ffd0e5;
   border-radius: 8px;
   padding: 0 12px;
-  color: #101828;
-  background: #eaf0f6;
+  color: #402238;
+  background: #fff4fa;
 }
 
 .field textarea {
@@ -550,25 +637,27 @@ h2 {
 
 .dayPicker button {
   min-height: 40px;
-  border: 0;
+  border: 1px solid #ffd0e5;
   border-radius: 8px;
-  color: #53616f;
-  background: #eaf0f6;
+  color: #7c6274;
+  background: #fff4fa;
   font-size: 0.76rem;
   font-weight: 900;
 }
 
 .dayPicker button.selected {
-  color: #101828;
-  background: #9fd5c0;
+  color: #fff;
+  background: #f55c9d;
+  border-color: #f55c9d;
 }
 
 .primaryAction {
   width: 100%;
   min-height: 52px;
   border-radius: 8px;
-  color: #f8fbff;
-  background: #244e73;
+  color: #fff;
+  background: #cf2f79;
+  box-shadow: 0 14px 28px rgba(207, 47, 121, 0.24);
 }
 
 .alertBackdrop {
@@ -591,9 +680,9 @@ h2 {
   margin: 0 auto 18px;
   display: grid;
   place-items: center;
-  color: #101828;
-  background: #f6c177;
-  box-shadow: 0 0 0 10px rgba(246, 193, 119, 0.2);
+  color: #cf2f79;
+  background: #ffe0ee;
+  box-shadow: 0 0 0 10px rgba(255, 176, 211, 0.28);
 }
 
 .pulseIcon.compact {
@@ -604,6 +693,7 @@ h2 {
 }
 
 .dueDialog h2 {
+  color: #4f183b;
   font-size: 1.8rem;
   overflow-wrap: anywhere;
 }
@@ -622,19 +712,24 @@ h2 {
 }
 
 .completeAction {
-  color: #f8fbff;
-  background: #3fa77a;
+  color: #1f5b4e;
+  background: #c9f3e7;
 }
 
 .snoozeAction {
-  color: #101828;
-  background: #f6c177;
+  color: #fff;
+  background: #f55c9d;
 }
 
 @media (max-width: 440px) {
   .appShell {
     padding: 0;
     display: block;
+  }
+
+  .appShell::before {
+    font-size: 4.4rem;
+    letter-spacing: 16px;
   }
 
   .phoneSurface {
@@ -644,6 +739,18 @@ h2 {
     border: 0;
     border-radius: 0;
     padding: max(18px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
+  }
+
+  .brandCharm {
+    right: 104px;
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
+  }
+
+  h1 {
+    max-width: 170px;
+    font-size: clamp(2rem, 9vw, 2.55rem);
   }
 
   .fieldGroup {
@@ -662,5 +769,15 @@ h2 {
   .completeAction,
   .snoozeAction {
     width: 100%;
+  }
+}
+
+@media (max-width: 370px) {
+  .brandCharm {
+    display: none;
+  }
+
+  h1 {
+    max-width: 190px;
   }
 }
