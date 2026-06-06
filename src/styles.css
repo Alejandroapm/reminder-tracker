@@ -105,6 +105,7 @@ h2 {
 }
 
 .iconButton,
+.editButton,
 .deleteButton,
 .completeButton {
   border: 0;
@@ -124,6 +125,11 @@ h2 {
 .iconButton.ghost {
   background: rgba(16, 24, 40, 0.08);
   color: #101828;
+}
+
+.iconButton.permissionGranted {
+  color: #101828;
+  background: #9fd5c0;
 }
 
 .topActions {
@@ -197,6 +203,10 @@ h2 {
   color: #101828;
   background: #9fd5c0;
   font-weight: 900;
+}
+
+.settingsNotify.granted {
+  background: #f6c177;
 }
 
 .settingsNote {
@@ -360,6 +370,19 @@ h2 {
   border-radius: 50%;
   color: #8a3342;
   background: rgba(138, 51, 66, 0.1);
+}
+
+.cardActions {
+  display: grid;
+  gap: 8px;
+}
+
+.editButton {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: #244e73;
+  background: rgba(36, 78, 115, 0.1);
 }
 
 .reminderBody {

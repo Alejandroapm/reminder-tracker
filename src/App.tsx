@@ -1,5 +1,5 @@
 import { Capacitor } from "@capacitor/core";
-import { LocalNotifications } from "@capacitor/local-notifications";
+import { LocalNotifications, Weekday } from "@capacitor/local-notifications";
 import {
   Bell,
   CalendarClock,
@@ -7,6 +7,7 @@ import {
   Circle,
   Clock3,
   Droplets,
+  Edit3,
   Home,
   Languages,
   ListChecks,
@@ -78,9 +79,11 @@ const copy = {
     spanish: "Spanish",
     notifications: "Notifications",
     enableNotifications: "Enable notifications",
+    notificationsOn: "Notifications enabled",
     nativeNotifications: "Native scheduled notifications",
     webNotifications: "Web notifications while the app is open",
     nativeNote: "Build with Capacitor for real iPhone local notifications.",
+    soundLimitNote: "Silent-mode override requires Apple's Critical Alerts entitlement.",
     active: "Active",
     today: "Today",
     done: "Done",
@@ -111,6 +114,11 @@ const copy = {
     createReminder: "Create reminder",
     reminderDue: "Reminder due",
     complete: "Complete",
+    edit: "Edit",
+    saveChanges: "Save changes",
+    status: "Status",
+    activeStatus: "Active",
+    completedStatus: "Completed",
     delete: "Delete",
     minute: "min",
     hourInterval: "hours",
@@ -157,9 +165,11 @@ const copy = {
     spanish: "Espanol",
     notifications: "Notificaciones",
     enableNotifications: "Activar notificaciones",
+    notificationsOn: "Notificaciones activadas",
     nativeNotifications: "Notificaciones nativas programadas",
     webNotifications: "Notificaciones web con la app abierta",
     nativeNote: "Compila con Capacitor para notificaciones locales reales en iPhone.",
+    soundLimitNote: "Ignorar modo silencio requiere el permiso Critical Alerts de Apple.",
     active: "Activos",
     today: "Hoy",
     done: "Hechos",
@@ -190,6 +200,11 @@ const copy = {
     createReminder: "Crear recordatorio",
     reminderDue: "Recordatorio pendiente",
     complete: "Completar",
+    edit: "Editar",
+    saveChanges: "Guardar cambios",
+    status: "Estado",
+    activeStatus: "Activo",
+    completedStatus: "Completado",
     delete: "Eliminar",
     minute: "min",
     hourInterval: "horas",
@@ -417,6 +432,16 @@ function notificationIdFor(reminderId: string) {
   return Math.abs(hash) || 1;
 }
 
+const nativeWeekdays = [
+  Weekday.Sunday,
+  Weekday.Monday,
+  Weekday.Tuesday,
+  Weekday.Wednesday,
+  Weekday.Thursday,
+  Weekday.Friday,
+  Weekday.Saturday,
+];
+
 function isNativeNotificationsAvailable() {
   return Capacitor.isNativePlatform() && Capacitor.isPluginAvailable("LocalNotifications");
 }
@@ -464,15 +489,12 @@ async function syncNativeNotifications(reminders: Reminder[], language: Language
   const now = Date.now();
   const notifications = reminders
     .filter((reminder) => reminder.enabled)
-    .map((reminder) => {
+    .flatMap((reminder) => {
       const due = new Date(reminder.nextDueAt);
       const at = due.getTime() <= now ? new Date(now + 1_000) : due;
-
-      return {
-        id: notificationIdFor(reminder.id),
+      const baseNotification = {
         title: reminder.title,
         body: `${recurrenceSummary(reminder, language)} - ${formatDue(reminder.nextDueAt, language)}`,
-        schedule: { at, allowWhileIdle: true },
         sound: "default",
         actionTypeId: NATIVE_ACTION_TYPE,
         interruptionLevel: "timeSensitive" as const,
@@ -480,6 +502,59 @@ async function syncNativeNotifications(reminders: Reminder[], language: Language
         threadIdentifier: "reminder-tracker",
         summaryArgument: labels.appName,
       };
+
+      if (reminder.frequency === "daily") {
+        return [{
+          ...baseNotification,
+          id: notificationIdFor(reminder.id),
+          schedule: {
+            at,
+            on: { hour: due.getHours(), minute: due.getMinutes() },
+            repeats: true,
+            allowWhileIdle: true,
+          },
+        }];
+      }
+
+      if (reminder.frequency === "weekly") {
+        return (reminder.daysOfWeek.length ? reminder.daysOfWeek : [due.getDay()]).map((day) => ({
+          ...baseNotification,
+          id: notificationIdFor(`${reminder.id}-${day}`),
+          schedule: {
+            at,
+            on: { weekday: nativeWeekdays[day], hour: due.getHours(), minute: due.getMinutes() },
+            repeats: true,
+            allowWhileIdle: true,
+          },
+        }));
+      }
+
+      if (reminder.frequency === "monthly") {
+        return [{
+          ...baseNotification,
+          id: notificationIdFor(reminder.id),
+          schedule: {
+            at,
+            on: { day: Math.max(1, Math.min(31, reminder.monthlyDay)), hour: due.getHours(), minute: due.getMinutes() },
+            repeats: true,
+            allowWhileIdle: true,
+          },
+        }];
+      }
+
+      if (reminder.frequency === "hourly" && reminder.intervalHours === 1) {
+        return [{
+          ...baseNotification,
+          id: notificationIdFor(reminder.id),
+          schedule: { at, every: "hour" as const, repeats: true, allowWhileIdle: true },
+        }];
+      }
+
+      return [{
+        ...baseNotification,
+        id: notificationIdFor(reminder.id),
+        schedule: { at, allowWhileIdle: true },
+      }];
     });
 
   if (notifications.length) {
@@ -512,7 +587,10 @@ export function App() {
   const [setupName, setSetupName] = useState(settings.username);
   const [draft, setDraft] = useState<ReminderDraft>(defaultDraft);
   const [isComposerOpen, setComposerOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingEnabled, setEditingEnabled] = useState(true);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<"default" | "granted" | "denied">("default");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "today" | "snoozed" | "done">("all");
   const [dueId, setDueId] = useState<string | null>(null);
@@ -529,6 +607,22 @@ export function App() {
   useEffect(() => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   }, [settings]);
+
+  useEffect(() => {
+    const refreshPermission = async () => {
+      if (isNativeNotificationsAvailable()) {
+        const current = await LocalNotifications.checkPermissions();
+        setNotificationPermission(current.display === "granted" ? "granted" : current.display === "denied" ? "denied" : "default");
+        return;
+      }
+
+      if ("Notification" in window) {
+        setNotificationPermission(Notification.permission);
+      }
+    };
+
+    void refreshPermission();
+  }, []);
 
   useEffect(() => {
     if (!isNativeNotificationsAvailable()) return;
@@ -618,23 +712,73 @@ export function App() {
 
   const requestNotifications = async () => {
     if (isNativeNotificationsAvailable()) {
-      await ensureNativeNotificationPermission();
+      const permitted = await ensureNativeNotificationPermission();
+      setNotificationPermission(permitted ? "granted" : "denied");
       await registerNativeActions(language);
       await syncNativeNotifications(reminders, language);
       return;
     }
 
     if (!("Notification" in window)) return;
-    await Notification.requestPermission();
+    const permission = await Notification.requestPermission();
+    setNotificationPermission(permission);
   };
 
-  const addReminder = (event: FormEvent<HTMLFormElement>) => {
+  const resetComposer = () => {
+    setDraft(defaultDraft);
+    setEditingId(null);
+    setEditingEnabled(true);
+    setComposerOpen(false);
+  };
+
+  const openNewReminder = () => {
+    setDraft(defaultDraft);
+    setEditingId(null);
+    setEditingEnabled(true);
+    setComposerOpen(true);
+  };
+
+  const openEditReminder = (reminder: Reminder) => {
+    const { id, createdAt, nextDueAt, completedCount, lastCompletedAt, lastSnoozedAt, enabled, ...editableReminder } = reminder;
+    void id;
+    void createdAt;
+    void nextDueAt;
+    void completedCount;
+    void lastCompletedAt;
+    void lastSnoozedAt;
+
+    setDraft(editableReminder);
+    setEditingId(reminder.id);
+    setEditingEnabled(enabled);
+    setComposerOpen(true);
+  };
+
+  const saveReminder = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!draft.title.trim()) return;
 
-    setReminders((current) => [makeReminder({ ...draft, title: draft.title.trim() }), ...current]);
-    setDraft(defaultDraft);
-    setComposerOpen(false);
+    const cleanDraft = { ...draft, title: draft.title.trim() };
+    if (!editingId) {
+      setReminders((current) => [makeReminder(cleanDraft), ...current]);
+      resetComposer();
+      return;
+    }
+
+    setReminders((current) =>
+      current.map((reminder) => {
+        if (reminder.id !== editingId) return reminder;
+
+        return {
+          ...reminder,
+          ...cleanDraft,
+          enabled: editingEnabled,
+          nextDueAt: editingEnabled ? getNextDue(cleanDraft).toISOString() : reminder.nextDueAt,
+          lastSnoozedAt: undefined,
+        };
+      }),
+    );
+    setDueId((current) => (current === editingId ? null : current));
+    resetComposer();
   };
 
   const completeReminder = (id: string) => {
@@ -702,12 +846,12 @@ export function App() {
           </div>
           <div className="topActions">
             <button
-              className="iconButton"
+              className={`iconButton ${notificationPermission === "granted" ? "permissionGranted" : ""}`}
               onClick={requestNotifications}
-              aria-label={labels.enableNotifications}
-              title={labels.enableNotifications}
+              aria-label={notificationPermission === "granted" ? labels.notificationsOn : labels.enableNotifications}
+              title={notificationPermission === "granted" ? labels.notificationsOn : labels.enableNotifications}
             >
-              <Bell size={21} />
+              {notificationPermission === "granted" ? <Check size={21} /> : <Bell size={21} />}
             </button>
             <button
               className="iconButton"
@@ -755,14 +899,18 @@ export function App() {
                 <option value="es">{labels.spanish}</option>
               </select>
             </label>
-            <button className="settingsNotify" onClick={requestNotifications}>
-              <Smartphone size={18} />
-              <span>{labels.enableNotifications}</span>
+            <button
+              className={`settingsNotify ${notificationPermission === "granted" ? "granted" : ""}`}
+              onClick={requestNotifications}
+            >
+              {notificationPermission === "granted" ? <Check size={18} /> : <Smartphone size={18} />}
+              <span>{notificationPermission === "granted" ? labels.notificationsOn : labels.enableNotifications}</span>
             </button>
             <p className="settingsNote">
               {isNativeNotificationsAvailable() ? labels.nativeNotifications : labels.webNotifications}
             </p>
             {!isNativeNotificationsAvailable() ? <p className="settingsNote">{labels.nativeNote}</p> : null}
+            <p className="settingsNote">{labels.soundLimitNote}</p>
           </section>
         ) : null}
 
@@ -791,7 +939,7 @@ export function App() {
               aria-label={labels.search}
             />
           </label>
-          <button className="addButton" onClick={() => setComposerOpen(true)}>
+          <button className="addButton" onClick={openNewReminder}>
             <Plus size={20} />
             <span>{labels.new}</span>
           </button>
@@ -851,13 +999,22 @@ export function App() {
                       </span>
                     </div>
                   </div>
-                  <button
-                    className="deleteButton"
-                    onClick={() => removeReminder(reminder.id)}
-                    aria-label={`${labels.delete} ${reminder.title}`}
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                  <div className="cardActions">
+                    <button
+                      className="editButton"
+                      onClick={() => openEditReminder(reminder)}
+                      aria-label={`${labels.edit} ${reminder.title}`}
+                    >
+                      <Edit3 size={18} />
+                    </button>
+                    <button
+                      className="deleteButton"
+                      onClick={() => removeReminder(reminder.id)}
+                      aria-label={`${labels.delete} ${reminder.title}`}
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </article>
               );
             })
@@ -904,13 +1061,13 @@ export function App() {
 
       {isComposerOpen ? (
         <div className="sheetBackdrop" role="presentation">
-          <form className="composerSheet" onSubmit={addReminder}>
+          <form className="composerSheet" onSubmit={saveReminder}>
             <div className="sheetHeader">
               <div>
-                <p className="eyebrow">{labels.newReminder}</p>
+                <p className="eyebrow">{editingId ? labels.edit : labels.newReminder}</p>
                 <h2>{labels.setRhythm}</h2>
               </div>
-              <button type="button" className="iconButton ghost" onClick={() => setComposerOpen(false)} aria-label="Close">
+              <button type="button" className="iconButton ghost" onClick={resetComposer} aria-label="Close">
                 <X size={21} />
               </button>
             </div>
@@ -1033,6 +1190,18 @@ export function App() {
             ) : null}
 
             <div className="fieldGroup">
+              {editingId ? (
+                <label className="field">
+                  <span>{labels.status}</span>
+                  <select
+                    value={editingEnabled ? "active" : "completed"}
+                    onChange={(event) => setEditingEnabled(event.target.value === "active")}
+                  >
+                    <option value="active">{labels.activeStatus}</option>
+                    <option value="completed">{labels.completedStatus}</option>
+                  </select>
+                </label>
+              ) : null}
               <label className="field">
                 <span>{labels.priority}</span>
                 <select
@@ -1059,8 +1228,8 @@ export function App() {
             </div>
 
             <button className="primaryAction" type="submit">
-              <Plus size={20} />
-              {labels.createReminder}
+              {editingId ? <Check size={20} /> : <Plus size={20} />}
+              {editingId ? labels.saveChanges : labels.createReminder}
             </button>
           </form>
         </div>

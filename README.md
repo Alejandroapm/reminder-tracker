@@ -41,6 +41,12 @@ npm run cap:open:ios
 
 The iOS project must be generated and opened on a Mac with Xcode. The app uses Capacitor Local Notifications with sound, banner, list, and badge presentation options.
 
+Native local notifications can appear on the lock screen and while another app is open when the user grants notification permission. The app schedules them with the default notification sound and a time-sensitive interruption level.
+
+Daily, weekly, monthly, and every-hour reminders are scheduled as repeating native local notifications. Multi-hour reminders are scheduled for their next occurrence and are rescheduled when the app handles a complete or snooze action, because Capacitor's repeat API does not support every-N-hours intervals directly.
+
+Ignoring the Ring/Silent switch, Do Not Disturb, or vibrator-only mode requires Apple's Critical Alerts entitlement. That entitlement is granted by Apple only for approved use cases, so this app cannot guarantee sound while the iPhone is muted unless that entitlement is approved and added to the native iOS target.
+
 ## iPhone Install
 
 After the GitHub Pages deployment is live, open the site in Safari, tap Share, then choose **Add to Home Screen**.
