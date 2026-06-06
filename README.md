@@ -27,19 +27,34 @@ npm run dev
 npm run build
 ```
 
-## Native iPhone Notifications
+## Native iPhone App
 
-The GitHub Pages version is still a PWA. It can show in-app reminders and browser notifications when supported, but it cannot guarantee a scheduled iPhone alarm while the website is closed.
+This repository now includes a Capacitor iOS project in `ios/`. That is the real iPhone app path. The GitHub Pages version is still only a web preview and cannot guarantee a scheduled iPhone alarm while the website is closed.
 
-For real scheduled local iPhone notifications, build the Capacitor version:
+To build the native app from Git, use a Mac with Xcode:
 
 ```bash
-npm run cap:add:ios
-npm run cap:sync
-npm run cap:open:ios
+npm install
+npm run build
+npm run ios:sync
+npm run ios:open
 ```
 
-The iOS project must be generated and opened on a Mac with Xcode. The app uses Capacitor Local Notifications with sound, banner, list, and badge presentation options.
+Then in Xcode:
+
+1. Select the `App` target.
+2. Set your Apple Developer Team under **Signing & Capabilities**.
+3. Confirm the bundle identifier is available, or change it from `com.alejandroapm.remindertracker`.
+4. Enable the **Time Sensitive Notifications** capability for stronger reminder delivery.
+5. Build and run on your iPhone, or archive/export an `.ipa` using your signing profile.
+
+After installing a development or enterprise-signed build, iOS may ask you to trust the developer profile in **Settings > General > VPN & Device Management**.
+
+You cannot install an unsigned iPhone app directly from GitHub. iOS requires signing before the phone will run it.
+
+## Native iPhone Notifications
+
+The native iOS app uses Capacitor Local Notifications with sound, banner, list, and badge presentation options.
 
 Native local notifications can appear on the lock screen and while another app is open when the user grants notification permission. The app schedules them with the default notification sound and a time-sensitive interruption level.
 

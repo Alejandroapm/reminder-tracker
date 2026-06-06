@@ -7,9 +7,9 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "cap:add:ios": "npm run build && cap add ios",
     "cap:sync": "npm run build && cap sync",
-    "cap:open:ios": "cap open ios"
+    "ios:sync": "npm run build && cap sync ios && node scripts/fix-ios-spm-paths.mjs",
+    "ios:open": "cap open ios"
   },
   "dependencies": {
     "@capacitor/core": "^8.4.0",
