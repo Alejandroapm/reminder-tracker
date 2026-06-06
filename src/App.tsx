@@ -1,25 +1,32 @@
+import { Capacitor } from "@capacitor/core";
+import { LocalNotifications } from "@capacitor/local-notifications";
 import {
   Bell,
   CalendarClock,
   Check,
-  ChevronRight,
   Circle,
   Clock3,
   Droplets,
   Home,
+  Languages,
   ListChecks,
+  Menu,
   Moon,
   Plus,
   Search,
+  Settings,
+  Smartphone,
   Sparkles,
   TimerReset,
   Trash2,
+  User,
   X,
 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type Frequency = "hourly" | "daily" | "weekly" | "monthly" | "specific";
 type Priority = "low" | "normal" | "high";
+type Language = "en" | "es";
 
 type Reminder = {
   id: string;
@@ -47,17 +54,175 @@ type ReminderDraft = Omit<
   "id" | "createdAt" | "nextDueAt" | "completedCount" | "lastCompletedAt" | "lastSnoozedAt" | "enabled"
 >;
 
-const STORAGE_KEY = "reminder-tracker.reminders";
-
-const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-const frequencyLabels: Record<Frequency, string> = {
-  hourly: "Hourly",
-  daily: "Daily",
-  weekly: "Weekly",
-  monthly: "Monthly",
-  specific: "Date",
+type AppSettings = {
+  username: string;
+  language: Language;
 };
+
+const STORAGE_KEY = "reminder-tracker.reminders";
+const SETTINGS_KEY = "reminder-tracker.settings";
+const NATIVE_ACTION_TYPE = "REMINDER_ACTIONS";
+
+const copy = {
+  en: {
+    appName: "Reminder Tracker",
+    hello: "Hello",
+    setNameTitle: "Set up your app",
+    setNameBody: "Choose the name this app should greet you with.",
+    getStarted: "Get started",
+    username: "Username",
+    usernamePlaceholder: "Alex",
+    settings: "Settings",
+    language: "Language",
+    english: "English",
+    spanish: "Spanish",
+    notifications: "Notifications",
+    enableNotifications: "Enable notifications",
+    nativeNotifications: "Native scheduled notifications",
+    webNotifications: "Web notifications while the app is open",
+    nativeNote: "Build with Capacitor for real iPhone local notifications.",
+    active: "Active",
+    today: "Today",
+    done: "Done",
+    search: "Search",
+    new: "New",
+    filters: {
+      all: "All",
+      today: "Today",
+      snoozed: "Snoozed",
+      done: "Done",
+    },
+    noReminders: "No reminders here",
+    noRemindersHelp: "Create a reminder to start tracking.",
+    newReminder: "New Reminder",
+    setRhythm: "Set the rhythm",
+    title: "Title",
+    notes: "Notes",
+    optionalDetails: "Optional details",
+    titlePlaceholder: "Take medicine",
+    frequency: "Frequency",
+    snooze: "Snooze",
+    every: "Every",
+    time: "Time",
+    date: "Date",
+    dayOfMonth: "Day of month",
+    priority: "Priority",
+    list: "List",
+    createReminder: "Create reminder",
+    reminderDue: "Reminder due",
+    complete: "Complete",
+    delete: "Delete",
+    minute: "min",
+    hourInterval: "hours",
+    frequencyLabel: {
+      hourly: "Hourly",
+      daily: "Daily",
+      weekly: "Weekly",
+      monthly: "Monthly",
+      specific: "Date",
+    },
+    priorityLabel: {
+      low: "Low",
+      normal: "Normal",
+      high: "High",
+    },
+    categories: {
+      Health: "Health",
+      Work: "Work",
+      Home: "Home",
+      Personal: "Personal",
+      Evening: "Evening",
+    },
+    days: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    todayAt: "Today at",
+    tomorrowAt: "Tomorrow at",
+    everyHour: "Every hour",
+    everyHours: "Every {count} hours",
+    weeklyOn: "Weekly on {days}",
+    monthlyOn: "Monthly on day {day}",
+    oneTime: "One-time reminder",
+    daily: "Every day",
+  },
+  es: {
+    appName: "Recordatorios",
+    hello: "Hola",
+    setNameTitle: "Configura tu app",
+    setNameBody: "Elige el nombre con el que la app debe saludarte.",
+    getStarted: "Empezar",
+    username: "Usuario",
+    usernamePlaceholder: "Alex",
+    settings: "Configuracion",
+    language: "Idioma",
+    english: "Ingles",
+    spanish: "Espanol",
+    notifications: "Notificaciones",
+    enableNotifications: "Activar notificaciones",
+    nativeNotifications: "Notificaciones nativas programadas",
+    webNotifications: "Notificaciones web con la app abierta",
+    nativeNote: "Compila con Capacitor para notificaciones locales reales en iPhone.",
+    active: "Activos",
+    today: "Hoy",
+    done: "Hechos",
+    search: "Buscar",
+    new: "Nuevo",
+    filters: {
+      all: "Todos",
+      today: "Hoy",
+      snoozed: "Pospuestos",
+      done: "Hechos",
+    },
+    noReminders: "No hay recordatorios",
+    noRemindersHelp: "Crea un recordatorio para empezar.",
+    newReminder: "Nuevo recordatorio",
+    setRhythm: "Define el ritmo",
+    title: "Titulo",
+    notes: "Notas",
+    optionalDetails: "Detalles opcionales",
+    titlePlaceholder: "Tomar medicina",
+    frequency: "Frecuencia",
+    snooze: "Posponer",
+    every: "Cada",
+    time: "Hora",
+    date: "Fecha",
+    dayOfMonth: "Dia del mes",
+    priority: "Prioridad",
+    list: "Lista",
+    createReminder: "Crear recordatorio",
+    reminderDue: "Recordatorio pendiente",
+    complete: "Completar",
+    delete: "Eliminar",
+    minute: "min",
+    hourInterval: "horas",
+    frequencyLabel: {
+      hourly: "Cada hora",
+      daily: "Diario",
+      weekly: "Semanal",
+      monthly: "Mensual",
+      specific: "Fecha",
+    },
+    priorityLabel: {
+      low: "Baja",
+      normal: "Normal",
+      high: "Alta",
+    },
+    categories: {
+      Health: "Salud",
+      Work: "Trabajo",
+      Home: "Casa",
+      Personal: "Personal",
+      Evening: "Noche",
+    },
+    days: ["Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"],
+    todayAt: "Hoy a las",
+    tomorrowAt: "Manana a las",
+    everyHour: "Cada hora",
+    everyHours: "Cada {count} horas",
+    weeklyOn: "Semanal: {days}",
+    monthlyOn: "Mensual el dia {day}",
+    oneTime: "Recordatorio unico",
+    daily: "Cada dia",
+  },
+} satisfies Record<Language, Record<string, unknown>>;
 
 const categoryIcons: Record<string, typeof Droplets> = {
   Health: Droplets,
@@ -93,32 +258,24 @@ const defaultDraft: ReminderDraft = {
   category: "Personal",
 };
 
-const presets: Array<Pick<ReminderDraft, "title" | "frequency" | "intervalHours" | "snoozeMinutes" | "category" | "notes">> = [
-  {
-    title: "Drink water",
-    frequency: "hourly",
-    intervalHours: 1,
-    snoozeMinutes: 10,
-    category: "Health",
-    notes: "A quick glass now beats catching up later.",
-  },
-  {
-    title: "Review priorities",
-    frequency: "daily",
-    intervalHours: 1,
-    snoozeMinutes: 15,
-    category: "Work",
-    notes: "Pick the next small win.",
-  },
-  {
-    title: "Reset for tomorrow",
-    frequency: "daily",
-    intervalHours: 1,
-    snoozeMinutes: 20,
-    category: "Evening",
-    notes: "Clear the mental countertop.",
-  },
-];
+function defaultLanguage(): Language {
+  return navigator.language.toLowerCase().startsWith("es") ? "es" : "en";
+}
+
+function loadSettings(): AppSettings {
+  try {
+    const stored = localStorage.getItem(SETTINGS_KEY);
+    if (!stored) return { username: "", language: defaultLanguage() };
+
+    const parsed = JSON.parse(stored) as Partial<AppSettings>;
+    return {
+      username: parsed.username ?? "",
+      language: parsed.language === "es" ? "es" : "en",
+    };
+  } catch {
+    return { username: "", language: defaultLanguage() };
+  }
+}
 
 function dateAtTime(date: Date, time: string) {
   const [hours, minutes] = time.split(":").map(Number);
@@ -184,37 +341,45 @@ function getNextDue(draft: ReminderDraft | Reminder, from = new Date()) {
   return dateAtTime(tomorrow, draft.time);
 }
 
-function formatDue(value: string) {
+function formatDue(value: string, language: Language) {
   const due = new Date(value);
   const now = new Date();
   const sameDay = due.toDateString() === now.toDateString();
   const tomorrow = new Date(now);
   tomorrow.setDate(now.getDate() + 1);
 
-  const time = due.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  if (sameDay) return `Today at ${time}`;
-  if (due.toDateString() === tomorrow.toDateString()) return `Tomorrow at ${time}`;
-  return due.toLocaleDateString([], { month: "short", day: "numeric" }) + ` at ${time}`;
+  const locale = language === "es" ? "es" : undefined;
+  const time = due.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" });
+  const labels = copy[language];
+
+  if (sameDay) return `${labels.todayAt} ${time}`;
+  if (due.toDateString() === tomorrow.toDateString()) return `${labels.tomorrowAt} ${time}`;
+
+  return due.toLocaleDateString(locale, { month: "short", day: "numeric" }) + ` ${time}`;
 }
 
-function recurrenceSummary(reminder: Reminder | ReminderDraft) {
+function recurrenceSummary(reminder: Reminder | ReminderDraft, language: Language) {
+  const labels = copy[language];
   if (reminder.frequency === "hourly") {
-    return reminder.intervalHours === 1 ? "Every hour" : `Every ${reminder.intervalHours} hours`;
+    return reminder.intervalHours === 1
+      ? labels.everyHour
+      : labels.everyHours.replace("{count}", String(reminder.intervalHours));
   }
 
   if (reminder.frequency === "weekly") {
-    return `Weekly on ${reminder.daysOfWeek.map((day) => dayLabels[day]).join(", ")}`;
+    const days = reminder.daysOfWeek.map((day) => labels.days[day]).join(", ");
+    return labels.weeklyOn.replace("{days}", days);
   }
 
   if (reminder.frequency === "monthly") {
-    return `Monthly on day ${reminder.monthlyDay}`;
+    return labels.monthlyOn.replace("{day}", String(reminder.monthlyDay));
   }
 
   if (reminder.frequency === "specific") {
-    return "One-time reminder";
+    return labels.oneTime;
   }
 
-  return "Every day";
+  return labels.daily;
 }
 
 function priorityTone(priority: Priority) {
@@ -244,10 +409,88 @@ function makeReminder(draft: ReminderDraft): Reminder {
   };
 }
 
-function sendBrowserNotification(reminder: Reminder) {
+function notificationIdFor(reminderId: string) {
+  let hash = 0;
+  for (let index = 0; index < reminderId.length; index += 1) {
+    hash = (hash * 31 + reminderId.charCodeAt(index)) | 0;
+  }
+  return Math.abs(hash) || 1;
+}
+
+function isNativeNotificationsAvailable() {
+  return Capacitor.isNativePlatform() && Capacitor.isPluginAvailable("LocalNotifications");
+}
+
+async function ensureNativeNotificationPermission() {
+  if (!isNativeNotificationsAvailable()) return false;
+
+  const current = await LocalNotifications.checkPermissions();
+  if (current.display === "granted") return true;
+
+  const requested = await LocalNotifications.requestPermissions();
+  return requested.display === "granted";
+}
+
+async function registerNativeActions(language: Language) {
+  if (!isNativeNotificationsAvailable()) return;
+
+  const labels = copy[language];
+  await LocalNotifications.registerActionTypes({
+    types: [
+      {
+        id: NATIVE_ACTION_TYPE,
+        actions: [
+          { id: "complete", title: labels.complete, foreground: true },
+          { id: "snooze", title: labels.snooze, foreground: true },
+        ],
+      },
+    ],
+  });
+}
+
+async function syncNativeNotifications(reminders: Reminder[], language: Language) {
+  if (!isNativeNotificationsAvailable()) return;
+  const permitted = await ensureNativeNotificationPermission();
+  if (!permitted) return;
+
+  const pending = await LocalNotifications.getPending();
+  if (pending.notifications.length) {
+    await LocalNotifications.cancel({
+      notifications: pending.notifications.map((notification) => ({ id: notification.id })),
+    });
+  }
+
+  const labels = copy[language];
+  const now = Date.now();
+  const notifications = reminders
+    .filter((reminder) => reminder.enabled)
+    .map((reminder) => {
+      const due = new Date(reminder.nextDueAt);
+      const at = due.getTime() <= now ? new Date(now + 1_000) : due;
+
+      return {
+        id: notificationIdFor(reminder.id),
+        title: reminder.title,
+        body: `${recurrenceSummary(reminder, language)} - ${formatDue(reminder.nextDueAt, language)}`,
+        schedule: { at, allowWhileIdle: true },
+        sound: "default",
+        actionTypeId: NATIVE_ACTION_TYPE,
+        interruptionLevel: "timeSensitive" as const,
+        extra: { source: "reminder-tracker", reminderId: reminder.id },
+        threadIdentifier: "reminder-tracker",
+        summaryArgument: labels.appName,
+      };
+    });
+
+  if (notifications.length) {
+    await LocalNotifications.schedule({ notifications });
+  }
+}
+
+function sendBrowserNotification(reminder: Reminder, language: Language) {
   if (!("Notification" in window) || Notification.permission !== "granted") return;
 
-  const body = `${recurrenceSummary(reminder)} · ${formatDue(reminder.nextDueAt)}`;
+  const body = `${recurrenceSummary(reminder, language)} - ${formatDue(reminder.nextDueAt, language)}`;
   if (navigator.serviceWorker?.controller) {
     navigator.serviceWorker.controller.postMessage({
       type: "SHOW_REMINDER",
@@ -265,16 +508,61 @@ function sendBrowserNotification(reminder: Reminder) {
 
 export function App() {
   const [reminders, setReminders] = useState<Reminder[]>(loadReminders);
+  const [settings, setSettings] = useState<AppSettings>(loadSettings);
+  const [setupName, setSetupName] = useState(settings.username);
   const [draft, setDraft] = useState<ReminderDraft>(defaultDraft);
   const [isComposerOpen, setComposerOpen] = useState(false);
+  const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "today" | "snoozed" | "done">("all");
   const [dueId, setDueId] = useState<string | null>(null);
   const notifiedRef = useRef<Set<string>>(new Set());
 
+  const language = settings.language;
+  const labels = copy[language];
+  const username = settings.username.trim();
+
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(reminders));
   }, [reminders]);
+
+  useEffect(() => {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  }, [settings]);
+
+  useEffect(() => {
+    if (!isNativeNotificationsAvailable()) return;
+    void registerNativeActions(language);
+  }, [language]);
+
+  useEffect(() => {
+    if (!isNativeNotificationsAvailable()) return;
+    void syncNativeNotifications(reminders, language);
+  }, [language, reminders]);
+
+  useEffect(() => {
+    if (!isNativeNotificationsAvailable()) return;
+
+    let removeListener: (() => Promise<void>) | undefined;
+    LocalNotifications.addListener("localNotificationActionPerformed", (action) => {
+      const reminderId = action.notification.extra?.reminderId as string | undefined;
+      if (!reminderId) return;
+
+      if (action.actionId === "complete") {
+        completeReminder(reminderId);
+      }
+
+      if (action.actionId === "snooze") {
+        snoozeReminder(reminderId);
+      }
+    }).then((handle) => {
+      removeListener = handle.remove;
+    });
+
+    return () => {
+      void removeListener?.();
+    };
+  }, []);
 
   useEffect(() => {
     const checkDue = () => {
@@ -286,14 +574,14 @@ export function App() {
       const notificationKey = `${due.id}:${due.nextDueAt}`;
       if (!notifiedRef.current.has(notificationKey)) {
         notifiedRef.current.add(notificationKey);
-        sendBrowserNotification(due);
+        sendBrowserNotification(due, language);
       }
     };
 
     checkDue();
     const interval = window.setInterval(checkDue, 15_000);
     return () => window.clearInterval(interval);
-  }, [reminders]);
+  }, [language, reminders]);
 
   const dueReminder = reminders.find((reminder) => reminder.id === dueId) ?? null;
 
@@ -329,6 +617,13 @@ export function App() {
   }, [filter, query, reminders]);
 
   const requestNotifications = async () => {
+    if (isNativeNotificationsAvailable()) {
+      await ensureNativeNotificationPermission();
+      await registerNativeActions(language);
+      await syncNativeNotifications(reminders, language);
+      return;
+    }
+
     if (!("Notification" in window)) return;
     await Notification.requestPermission();
   };
@@ -388,52 +683,102 @@ export function App() {
     if (dueId === id) setDueId(null);
   };
 
-  const applyPreset = (preset: (typeof presets)[number]) => {
-    setDraft((current) => ({
-      ...current,
-      ...preset,
-      title: preset.title,
-      time: currentTimeInput,
-      specificDate: todayDateInput,
-    }));
-    setComposerOpen(true);
+  const finishSetup = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmed = setupName.trim();
+    if (!trimmed) return;
+    setSettings((current) => ({ ...current, username: trimmed }));
   };
 
   return (
     <main className="appShell">
-      <section className="phoneSurface" aria-label="Reminder Tracker app">
+      <section className="phoneSurface" aria-label={labels.appName}>
         <header className="topBar">
           <div>
-            <p className="eyebrow">Reminder Tracker</p>
-            <h1>Keep the day moving.</h1>
+            <p className="eyebrow">{labels.appName}</p>
+            <h1>
+              {labels.hello} {username || labels.usernamePlaceholder}
+            </h1>
           </div>
-          <button className="iconButton" onClick={requestNotifications} aria-label="Enable notifications" title="Enable notifications">
-            <Bell size={21} />
-          </button>
+          <div className="topActions">
+            <button
+              className="iconButton"
+              onClick={requestNotifications}
+              aria-label={labels.enableNotifications}
+              title={labels.enableNotifications}
+            >
+              <Bell size={21} />
+            </button>
+            <button
+              className="iconButton"
+              onClick={() => setSettingsOpen((current) => !current)}
+              aria-label={labels.settings}
+              title={labels.settings}
+            >
+              <Menu size={22} />
+            </button>
+          </div>
         </header>
 
-        <section className="statusBand" aria-label="Reminder summary">
+        {isSettingsOpen ? (
+          <section className="settingsPanel" aria-label={labels.settings}>
+            <div className="settingsPanelHeader">
+              <span>
+                <Settings size={18} />
+                {labels.settings}
+              </span>
+              <button className="smallClose" onClick={() => setSettingsOpen(false)} aria-label="Close settings">
+                <X size={17} />
+              </button>
+            </div>
+            <label className="settingsField">
+              <span>
+                <User size={15} />
+                {labels.username}
+              </span>
+              <input
+                value={settings.username}
+                onChange={(event) => setSettings({ ...settings, username: event.target.value })}
+                placeholder={labels.usernamePlaceholder}
+              />
+            </label>
+            <label className="settingsField">
+              <span>
+                <Languages size={15} />
+                {labels.language}
+              </span>
+              <select
+                value={settings.language}
+                onChange={(event) => setSettings({ ...settings, language: event.target.value as Language })}
+              >
+                <option value="en">{labels.english}</option>
+                <option value="es">{labels.spanish}</option>
+              </select>
+            </label>
+            <button className="settingsNotify" onClick={requestNotifications}>
+              <Smartphone size={18} />
+              <span>{labels.enableNotifications}</span>
+            </button>
+            <p className="settingsNote">
+              {isNativeNotificationsAvailable() ? labels.nativeNotifications : labels.webNotifications}
+            </p>
+            {!isNativeNotificationsAvailable() ? <p className="settingsNote">{labels.nativeNote}</p> : null}
+          </section>
+        ) : null}
+
+        <section className="statusBand" aria-label={labels.notifications}>
           <div>
             <strong>{stats.active}</strong>
-            <span>Active</span>
+            <span>{labels.active}</span>
           </div>
           <div>
             <strong>{stats.dueToday}</strong>
-            <span>Today</span>
+            <span>{labels.today}</span>
           </div>
           <div>
             <strong>{stats.completed}</strong>
-            <span>Done</span>
+            <span>{labels.done}</span>
           </div>
-        </section>
-
-        <section className="quickRow" aria-label="Quick reminder presets">
-          {presets.map((preset) => (
-            <button key={preset.title} className="presetButton" onClick={() => applyPreset(preset)}>
-              <span>{preset.title}</span>
-              <ChevronRight size={16} />
-            </button>
-          ))}
         </section>
 
         <div className="toolbar">
@@ -442,20 +787,20 @@ export function App() {
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search"
-              aria-label="Search reminders"
+              placeholder={labels.search}
+              aria-label={labels.search}
             />
           </label>
           <button className="addButton" onClick={() => setComposerOpen(true)}>
             <Plus size={20} />
-            <span>New</span>
+            <span>{labels.new}</span>
           </button>
         </div>
 
         <nav className="filters" aria-label="Reminder filters">
           {(["all", "today", "snoozed", "done"] as const).map((item) => (
             <button key={item} className={filter === item ? "active" : ""} onClick={() => setFilter(item)}>
-              {item}
+              {labels.filters[item]}
             </button>
           ))}
         </nav>
@@ -464,8 +809,8 @@ export function App() {
           {visibleReminders.length === 0 ? (
             <div className="emptyState">
               <CalendarClock size={42} />
-              <h2>No reminders here</h2>
-              <p>Add one or try a quick preset.</p>
+              <h2>{labels.noReminders}</h2>
+              <p>{labels.noRemindersHelp}</p>
             </div>
           ) : (
             visibleReminders.map((reminder) => {
@@ -476,7 +821,11 @@ export function App() {
                   <button
                     className="completeButton"
                     onClick={() => completeReminder(reminder.id)}
-                    aria-label={reminder.enabled ? `Complete ${reminder.title}` : `Completed ${reminder.title}`}
+                    aria-label={
+                      reminder.enabled
+                        ? `${labels.complete} ${reminder.title}`
+                        : `${labels.done} ${reminder.title}`
+                    }
                     disabled={!reminder.enabled}
                   >
                     {reminder.enabled ? <Circle size={22} /> : <Check size={22} />}
@@ -485,7 +834,7 @@ export function App() {
                     <div className="cardTop">
                       <div className="categoryPill">
                         <Icon size={14} />
-                        {reminder.category}
+                        {labels.categories[reminder.category as keyof typeof labels.categories] ?? reminder.category}
                       </div>
                       <span className={`priorityDot ${priorityTone(reminder.priority)}`} />
                     </div>
@@ -494,15 +843,19 @@ export function App() {
                     <div className="metaGrid">
                       <span>
                         <Clock3 size={15} />
-                        {formatDue(reminder.nextDueAt)}
+                        {formatDue(reminder.nextDueAt, language)}
                       </span>
                       <span>
                         <TimerReset size={15} />
-                        {recurrenceSummary(reminder)}
+                        {recurrenceSummary(reminder, language)}
                       </span>
                     </div>
                   </div>
-                  <button className="deleteButton" onClick={() => removeReminder(reminder.id)} aria-label={`Delete ${reminder.title}`}>
+                  <button
+                    className="deleteButton"
+                    onClick={() => removeReminder(reminder.id)}
+                    aria-label={`${labels.delete} ${reminder.title}`}
+                  >
                     <Trash2 size={18} />
                   </button>
                 </article>
@@ -512,13 +865,50 @@ export function App() {
         </section>
       </section>
 
+      {!username ? (
+        <div className="alertBackdrop" role="dialog" aria-modal="true" aria-labelledby="setup-title">
+          <form className="setupDialog" onSubmit={finishSetup}>
+            <div className="pulseIcon compact">
+              <User size={28} />
+            </div>
+            <p className="eyebrow">{labels.appName}</p>
+            <h2 id="setup-title">{labels.setNameTitle}</h2>
+            <p>{labels.setNameBody}</p>
+            <label className="field wide">
+              <span>{labels.username}</span>
+              <input
+                value={setupName}
+                onChange={(event) => setSetupName(event.target.value)}
+                placeholder={labels.usernamePlaceholder}
+                autoFocus
+                required
+              />
+            </label>
+            <label className="field wide">
+              <span>{labels.language}</span>
+              <select
+                value={settings.language}
+                onChange={(event) => setSettings({ ...settings, language: event.target.value as Language })}
+              >
+                <option value="en">{labels.english}</option>
+                <option value="es">{labels.spanish}</option>
+              </select>
+            </label>
+            <button className="primaryAction" type="submit">
+              <Check size={20} />
+              {labels.getStarted}
+            </button>
+          </form>
+        </div>
+      ) : null}
+
       {isComposerOpen ? (
         <div className="sheetBackdrop" role="presentation">
           <form className="composerSheet" onSubmit={addReminder}>
             <div className="sheetHeader">
               <div>
-                <p className="eyebrow">New Reminder</p>
-                <h2>Set the rhythm</h2>
+                <p className="eyebrow">{labels.newReminder}</p>
+                <h2>{labels.setRhythm}</h2>
               </div>
               <button type="button" className="iconButton ghost" onClick={() => setComposerOpen(false)} aria-label="Close">
                 <X size={21} />
@@ -526,33 +916,33 @@ export function App() {
             </div>
 
             <label className="field wide">
-              <span>Title</span>
+              <span>{labels.title}</span>
               <input
                 value={draft.title}
                 onChange={(event) => setDraft({ ...draft, title: event.target.value })}
-                placeholder="Drink water"
+                placeholder={labels.titlePlaceholder}
                 required
               />
             </label>
 
             <label className="field wide">
-              <span>Notes</span>
+              <span>{labels.notes}</span>
               <textarea
                 value={draft.notes}
                 onChange={(event) => setDraft({ ...draft, notes: event.target.value })}
-                placeholder="Optional details"
+                placeholder={labels.optionalDetails}
                 rows={3}
               />
             </label>
 
             <div className="fieldGroup">
               <label className="field">
-                <span>Frequency</span>
+                <span>{labels.frequency}</span>
                 <select
                   value={draft.frequency}
                   onChange={(event) => setDraft({ ...draft, frequency: event.target.value as Frequency })}
                 >
-                  {Object.entries(frequencyLabels).map(([value, label]) => (
+                  {Object.entries(labels.frequencyLabel).map(([value, label]) => (
                     <option value={value} key={value}>
                       {label}
                     </option>
@@ -560,14 +950,14 @@ export function App() {
                 </select>
               </label>
               <label className="field">
-                <span>Snooze</span>
+                <span>{labels.snooze}</span>
                 <select
                   value={draft.snoozeMinutes}
                   onChange={(event) => setDraft({ ...draft, snoozeMinutes: Number(event.target.value) })}
                 >
                   {[5, 10, 15, 20, 30, 60].map((minutes) => (
                     <option value={minutes} key={minutes}>
-                      {minutes} min
+                      {minutes} {labels.minute}
                     </option>
                   ))}
                 </select>
@@ -576,7 +966,7 @@ export function App() {
 
             {draft.frequency === "hourly" ? (
               <label className="field wide">
-                <span>Every</span>
+                <span>{labels.every}</span>
                 <input
                   type="number"
                   min="1"
@@ -589,7 +979,7 @@ export function App() {
 
             {draft.frequency !== "hourly" ? (
               <label className="field wide">
-                <span>Time</span>
+                <span>{labels.time}</span>
                 <input
                   type="time"
                   value={draft.time}
@@ -600,7 +990,7 @@ export function App() {
 
             {draft.frequency === "specific" ? (
               <label className="field wide">
-                <span>Date</span>
+                <span>{labels.date}</span>
                 <input
                   type="date"
                   value={draft.specificDate}
@@ -611,7 +1001,7 @@ export function App() {
 
             {draft.frequency === "weekly" ? (
               <div className="dayPicker" aria-label="Weekly days">
-                {dayLabels.map((label, index) => (
+                {labels.days.map((label, index) => (
                   <button
                     type="button"
                     className={draft.daysOfWeek.includes(index) ? "selected" : ""}
@@ -631,7 +1021,7 @@ export function App() {
 
             {draft.frequency === "monthly" ? (
               <label className="field wide">
-                <span>Day of month</span>
+                <span>{labels.dayOfMonth}</span>
                 <input
                   type="number"
                   min="1"
@@ -644,22 +1034,24 @@ export function App() {
 
             <div className="fieldGroup">
               <label className="field">
-                <span>Priority</span>
+                <span>{labels.priority}</span>
                 <select
                   value={draft.priority}
                   onChange={(event) => setDraft({ ...draft, priority: event.target.value as Priority })}
                 >
-                  <option value="low">Low</option>
-                  <option value="normal">Normal</option>
-                  <option value="high">High</option>
+                  {Object.entries(labels.priorityLabel).map(([value, label]) => (
+                    <option value={value} key={value}>
+                      {label}
+                    </option>
+                  ))}
                 </select>
               </label>
               <label className="field">
-                <span>List</span>
+                <span>{labels.list}</span>
                 <select value={draft.category} onChange={(event) => setDraft({ ...draft, category: event.target.value })}>
                   {Object.keys(categoryIcons).map((category) => (
                     <option value={category} key={category}>
-                      {category}
+                      {labels.categories[category as keyof typeof labels.categories] ?? category}
                     </option>
                   ))}
                 </select>
@@ -668,7 +1060,7 @@ export function App() {
 
             <button className="primaryAction" type="submit">
               <Plus size={20} />
-              Create reminder
+              {labels.createReminder}
             </button>
           </form>
         </div>
@@ -680,17 +1072,18 @@ export function App() {
             <div className="pulseIcon">
               <Bell size={30} />
             </div>
-            <p className="eyebrow">Reminder due</p>
+            <p className="eyebrow">{labels.reminderDue}</p>
             <h2 id="due-title">{dueReminder.title}</h2>
-            <p>{dueReminder.notes || recurrenceSummary(dueReminder)}</p>
+            <p>{dueReminder.notes || recurrenceSummary(dueReminder, language)}</p>
             <div className="dialogActions">
               <button onClick={() => completeReminder(dueReminder.id)} className="completeAction">
                 <Check size={22} />
-                Complete
+                {labels.complete}
               </button>
               <button onClick={() => snoozeReminder(dueReminder.id)} className="snoozeAction">
                 <TimerReset size={22} />
-                Snooze {dueReminder.snoozeMinutes}m
+                {labels.snooze} {dueReminder.snoozeMinutes}{" "}
+                {labels.minute}
               </button>
             </div>
           </section>
